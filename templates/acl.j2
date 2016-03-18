@@ -1,0 +1,88 @@
+! templates/acl.j2
+#jinja2: trim_blocks: False
+#jinja2: lstrip_blocks: False
+
+{% set state = item.state | default(eos_acl_default_state) %}
+{% set name = item.name %}
+{% set type = item.type | default(eos_acl_default_type) %}
+{% set seqno = item.seqno | default(0) %}
+{% set action = item.action %}
+{% set srcaddr = item.srcaddr %}
+{% set srcprefixlen = item.srcprefixlen | default(eos_acl_default_srcprefixlen) %}
+{% set log = item.log | default(eos_acl_default_log) %}
+
+{# set the network address specified by the srcaddr/srcprefixlen
+{# this matches the information represented by 'show' on EOS #}
+{% set netaddr = srcaddr | ipsubnet(srcprefixlen) %}
+{% if not netaddr %}
+   {# if srcprefixlen is 32, netaddr is False, so define the netaddr as a host IP #}
+   {% set netaddr = "host %s" % srcaddr %}
+{% endif %}
+
+{# set the seqno and log strings to be used in the actual rule #}
+{% set seqno_rule = "%s " % seqno if seqno else '' %}
+{% set log_rule = ' log' if log else '' %}
+
+{# build the rule command line #}
+{% set rule = "%s%s %s%s" % (seqno_rule, action, netaddr, log_rule) %}
+
+{% set acl_block = _eos_config | config_block("ip access-list %s %s" % (type, name), indent=3) %}
+
+{% if state == 'absent' %} {# remove the acl if it exists #}
+
+   {% if acl_block %}
+      {# if acl is not defined, then there is nothing to remove, otherwise
+      {# remove any/all acl entries that match the address and log status,
+      {# regardless of seqno #}
+
+ip access-list {{ type }} {{ name }}
+
+      {% set match = acl_block | join('\n') | re_findall("^(\d+)\s*%s %s%s$" % (action, netaddr, log_rule)) %}
+      {% if match %}
+         {% for entry in match %}
+
+   no {{ entry }}
+
+         {% endfor %} {# entry in match #}
+      {% endif %} {# match #}
+      {# exit from the ip access-list block to save changes #}
+
+   exit
+
+   {% endif %} {# acl_block #}
+
+{% elif state == 'present' %}
+
+ip access-list {{ type }} {{ name }}
+
+   {% if acl_block %}
+      {# acl defined, update/add rule by removing all matching entries #}
+      {% set match = acl_block | join('\n') | re_findall("^(\d+)\s*%s %s%s" % (action, netaddr, log_rule)) %}
+      {% if match %}
+         {% for entry in match %}
+            {# only remove entries that do not match seqno. if seqno matches
+            {# the requested seqno, then the entry exists and we do not
+            {# want to remove it #}
+            {% if entry != "%s" % seqno %}
+
+   no {{ entry }}
+
+            {% endif %} {# seqno does not match #}
+         {% endfor %} {# entry in match #}
+      {% endif %} {# match #}
+
+      {# now remove any entry with the same seqno that does not match the full requested entry #}
+      {% set match = acl_block | join('\n') | re_search("^%s .*" % seqno) %}
+      {% if match and match.group(0) != rule %}
+
+   no {{ seqno }}
+
+      {% endif %} {# match #}
+
+   {% endif %} {# acl_block #}
+   {# finally, add the rule and exit #}
+
+   {{ rule }}
+   exit
+
+{% endif %}
