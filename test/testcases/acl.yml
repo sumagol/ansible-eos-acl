@@ -1,5 +1,46 @@
 ---
 defaults:
-  module: purge_vlans
+  module: acl
 
 testcases:
+  # DO A TEST
+  - name: Add an non-existing ACL as host address
+    arguments:
+      acls:
+        - name: ACL-1
+          action: permit
+          seqno: 10
+          description: Adds rule 10 as a host address
+          type: standard
+          srcaddr: 10.11.12.13
+          log: false
+    setup: |
+      no ip access-list standard ACL-1
+      ip access-list standard ACL-1
+      50 permit 10.10.10.10/32
+      exit
+    present: |
+      ip access-list standard ACL-1
+         10 permit host 10.11.12.13
+         50 permit host 10.10.10.10
+    absent: |
+      ip access-list standard ACL-1
+         10 permit 10.11.12.13/32
+         50 permit 10.10.10.10/32
+
+
+  # # DO A TEST
+  # - name: Add an non-existing ACL
+  #   arguments:
+  #     acls:
+  #       - name: ACL-1
+  #         action: permit
+  #         seqno: 50
+  #         description: Removes duplicate rules 41 and 99, keeping 50
+  #         type: standard
+  #         srcaddr: 10.10.10.10
+  #         srcprefixlen: '32'
+  #         log: true
+  #   setup: |
+  #   present: |
+  #   absent: |

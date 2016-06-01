@@ -40,8 +40,8 @@
     # srcprefixlen is 32 (single host IP) or undefined (default 32)
     item.name is defined and
     (item.seqno is defined or (item.state is defined and item.state == 'absent')) and
-    item.action is defined and
-    item.srcaddr is defined and
+     item.action is defined and
+     item.srcaddr is defined and
     (item.srcprefixlen is not defined or
      item.srcprefixlen == '32' or item.srcprefixlen == 32 or
      item.srcaddr | ipsubnet(item.srcprefixlen) == "%s/%s" % (item.srcaddr, item.srcprefixlen))
