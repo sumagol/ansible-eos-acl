@@ -3,44 +3,344 @@ defaults:
   module: acl
 
 testcases:
-  # DO A TEST
-  - name: Add an non-existing ACL as host address
+  - name: Add non-existing ACLs as host addresses
     arguments:
       acls:
-        - name: ACL-1
+        - name: ACL-11
           action: permit
-          seqno: 10
-          description: Adds rule 10 as a host address
+          seqno: 11
+          description: Adds rule 11 as a host address
+          type: standard
+          srcaddr: 10.11.12.11
+          srcprefixlen: 32
+          log: true
+        - name: ACL-11
+          action: deny
+          seqno: 12
+          description: Adds rule 12 as a host address
+          type: standard
+          srcaddr: 10.11.12.12
+          log: false
+        - name: ACL-12
+          action: permit
+          seqno: 13
+          description: Adds rule 13 as a host address
           type: standard
           srcaddr: 10.11.12.13
           log: false
     setup: |
-      no ip access-list standard ACL-1
-      ip access-list standard ACL-1
-      50 permit 10.10.10.10/32
+      no ip access-list standard ACL-11
+      no ip access-list standard ACL-12
       exit
     present: |
-      ip access-list standard ACL-1
-         10 permit host 10.11.12.13
-         50 permit host 10.10.10.10
+      ip access-list standard ACL-11
+         11 permit host 10.11.12.11 log
+         12 deny host 10.11.12.12
+      ip access-list standard ACL-12
+         13 permit host 10.11.12.13
     absent: |
-      ip access-list standard ACL-1
-         10 permit 10.11.12.13/32
-         50 permit 10.10.10.10/32
+      ip access-list standard ACL-11
+         11 permit host 10.11.12.11
+         11 permit 10.11.12.11/32
+         12 deny 10.11.12.12/32
+      ip access-list standard ACL-12
+         13 permit 10.11.12.13/32
 
+  - name: Add non-existing ACLs as prefix addresses
+    arguments:
+      acls:
+        - name: ACL-21
+          action: permit
+          seqno: 21
+          description: Adds rule 21 as a prefix address
+          type: standard
+          srcaddr: 10.21.0.0
+          srcprefixlen: 16
+          log: true
+        - name: ACL-21
+          action: deny
+          seqno: 22
+          description: Adds rule 22 as a prefix address
+          type: standard
+          srcaddr: 10.22.10.0
+          srcprefixlen: 24
+          log: false
+        - name: ACL-22
+          action: deny
+          seqno: 23
+          description: Adds rule 23 as a prefix address
+          type: standard
+          srcaddr: 23.0.0.0
+          srcprefixlen: 8
+          log: true
+        - name: ACL-22
+          action: permit
+          seqno: 24
+          description: Adds rule 24 as a prefix address
+          type: standard
+          srcaddr: 16.0.0.0
+          srcprefixlen: 4
+          log: false
+    setup: |
+      no ip access-list standard ACL-21
+      no ip access-list standard ACL-22
+      exit
+    present: |
+      ip access-list standard ACL-21
+         21 permit 10.21.0.0/16 log
+         22 deny 10.22.10.0/24
+      ip access-list standard ACL-22
+         23 deny 23.0.0.0/8 log
+         24 permit 16.0.0.0/4
 
-  # # DO A TEST
-  # - name: Add an non-existing ACL
-  #   arguments:
-  #     acls:
-  #       - name: ACL-1
-  #         action: permit
-  #         seqno: 50
-  #         description: Removes duplicate rules 41 and 99, keeping 50
-  #         type: standard
-  #         srcaddr: 10.10.10.10
-  #         srcprefixlen: '32'
-  #         log: true
-  #   setup: |
-  #   present: |
-  #   absent: |
+  - name: Add rules to existing ACL
+    arguments:
+      acls:
+        - name: ACL-31
+          action: permit
+          seqno: 31
+          description: Adds rule 31
+          type: standard
+          srcaddr: 10.11.12.31
+          srcprefixlen: 32
+          log: true
+        - name: ACL-31
+          action: deny
+          seqno: 32
+          description: Adds rule 32
+          type: standard
+          srcaddr: 10.32.10.0
+          srcprefixlen: 24
+          log: false
+        - name: ACL-31
+          action: deny
+          seqno: 33
+          description: Adds rule 33
+          type: standard
+          srcaddr: 33.0.0.0
+          srcprefixlen: 8
+          log: true
+    setup: |
+      no ip access-list standard ACL-31
+      ip access-list standard ACL-31
+      10 permit 10.11.12.10/32 log
+      50 deny host 10.11.12.50
+      exit
+    present: |
+      ip access-list standard ACL-31
+         10 permit host 10.11.12.10 log
+         31 permit host 10.11.12.31 log
+         32 deny 10.32.10.0/24
+         33 deny 33.0.0.0/8 log
+         50 deny host 10.11.12.50
+
+  - name: Skip ACLs not in CIDR format
+    changed: 0
+    arguments:
+      acls:
+        - name: ACL-41
+          action: permit
+          seqno: 41
+          description: Adds rule 41
+          type: standard
+          srcaddr: 10.11.12.31
+          srcprefixlen: 24
+          log: true
+        - name: ACL-41
+          action: deny
+          seqno: 42
+          description: Adds rule 42
+          type: standard
+          srcaddr: 10.42.10.0
+          srcprefixlen: 17
+          log: false
+    setup: |
+      no ip access-list standard ACL-41
+      ip access-list standard ACL-41
+      10 permit 10.11.12.10/32 log
+      50 deny host 10.11.12.50
+      exit
+    present: |
+      ip access-list standard ACL-41
+         10 permit host 10.11.12.10 log
+         50 deny host 10.11.12.50
+    absent: |
+      ip access-list standard ACL-41
+         41 permit 10.11.12.31/24 log
+         42 deny 10.42.10.0/17
+
+  - name: Remove existing ACL rules
+    arguments:
+      acls:
+        - name: ACL-51
+          action: permit
+          seqno: 51
+          description: Removes rule 51
+          type: standard
+          srcaddr: 10.11.12.51
+          log: true
+          state: absent
+        - name: ACL-51
+          action: deny
+          seqno: 52
+          description: Removes rule 52
+          type: standard
+          srcaddr: 10.52.0.0
+          srcprefixlen: 16
+          log: false
+          state: absent
+        - name: ACL-51
+          action: deny
+          seqno: 53
+          description: Do not remove rule 53 - not exact match
+          type: standard
+          srcaddr: 53.0.0.0
+          srcprefixlen: 8
+          log: false
+          state: absent
+        - name: ACL-51
+          action: permit
+          seqno: 154
+          description: Remove rule 54 with matching addr, leave rule 154
+          type: standard
+          srcaddr: 10.11.54.0
+          srcprefixlen: 24
+          log: false
+          state: absent
+        - name: ACL-51
+          action: permit
+          seqno: 55
+          description: Remove rule 55, and 155 with matching addr
+          type: standard
+          srcaddr: 10.55.0.0
+          srcprefixlen: 16
+          log: true
+          state: absent
+    setup: |
+      no ip access-list standard ACL-51
+      ip access-list standard ACL-51
+      51 permit host 10.11.12.51 log
+      52 deny 10.52.0.0/16
+      53 permit 53.0.0.0/8
+      54 permit 10.11.54.0/24
+      55 permit 10.55.0.0/16 log
+      154 permit 10.11.154.0/24
+      155 permit 10.55.0.0/16 log
+      exit
+    present: |
+      ip access-list standard ACL-51
+         53 permit 53.0.0.0/8
+         154 permit 10.11.154.0/24
+    absent: |
+      ip access-list standard ACL-51
+         51 permit host 10.11.12.51 log
+         52 deny 10.52.0.0/16
+         54 permit 10.11.54.0/24
+         55 permit 10.55.0.0/16 log
+         155 permit 10.55.0.0/16 log
+
+  - name: Modify existing ACL rules
+    arguments:
+      acls:
+        - name: ACL-61
+          action: permit
+          seqno: 61
+          description: Update rule 61
+          type: standard
+          srcaddr: 10.11.12.61
+          log: true
+        - name: ACL-61
+          action: permit
+          seqno: 62
+          description: Update rule 62, removing matching rules 41 and 81
+          type: standard
+          srcaddr: 10.11.12.62
+          log: false
+        - name: ACL-61
+          action: permit
+          seqno: 63
+          description: Update rule 63
+          type: standard
+          srcaddr: 10.63.0.0
+          srcprefixlen: 16
+          log: false
+    setup: |
+      no ip access-list standard ACL-61
+      ip access-list standard ACL-61
+      41 permit host 10.11.12.62
+      61 permit host 10.11.12.61
+      62 permit host 10.11.12.162
+      63 deny 10.63.0.0/16 log
+      81 permit host 10.11.12.62
+      exit
+    present: |
+      ip access-list standard ACL-61
+         61 permit host 10.11.12.61 log
+         62 permit host 10.11.12.62
+         63 permit 10.63.0.0/16
+    absent: |
+      ip access-list standard ACL-61
+         41 permit host 10.11.12.62
+         61 permit host 10.11.12.61
+         63 deny 10.63.0.0/16 log
+         81 permit host 10.11.12.62
+
+  - name: Add, modify, remove ACL rules
+    arguments:
+      acls:
+        - name: ACL-71
+          action: permit
+          seqno: 71
+          description: Update rule 71
+          type: standard
+          srcaddr: 10.11.12.71
+          log: false
+        - name: ACL-71
+          action: deny
+          seqno: 72
+          description: remove rule 72
+          type: standard
+          srcaddr: 10.11.12.72
+          log: false
+          state: absent
+        - name: ACL-71
+          action: permit
+          seqno: 73
+          description: Add rule 73
+          type: standard
+          srcaddr: 73.0.0.0
+          srcprefixlen: 8
+          log: false
+        - name: ACL-81
+          action: permit
+          seqno: 81
+          description: Add rule 81
+          type: standard
+          srcaddr: 81.0.0.0
+          srcprefixlen: 8
+          log: false
+        - name: ACL-81
+          action: permit
+          seqno: 82
+          description: Add rule 82
+          type: standard
+          srcaddr: 10.11.12.82
+          log: true
+    setup: |
+      no ip access-list standard ACL-71
+      no ip access-list standard ACL-81
+      ip access-list standard ACL-71
+      71 permit host 10.11.12.171 log
+      72 deny host 10.11.12.72
+      exit
+    present: |
+      ip access-list standard ACL-71
+         71 permit host 10.11.12.71
+         73 permit 73.0.0.0/8
+      ip access-list standard ACL-81
+         81 permit 81.0.0.0/8
+         82 permit host 10.11.12.82 log
+    absent: |
+      ip access-list standard ACL-71
+         71 permit host 10.11.12.171 log
+         72 deny host 10.11.12.72
