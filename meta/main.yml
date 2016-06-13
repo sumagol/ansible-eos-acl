@@ -32,7 +32,7 @@
 ---
 galaxy_info:
   author: EOS+ CS
-  description: Role for managing EOS ACLs, Routemaps and IPv4 static routing configuration
+  description: Role for managing EOS ACLs
   company: Arista
   license: BSD-3
   platforms:
