@@ -35,6 +35,7 @@
     transport: 'cli'
     use_ssl: "{{ use_ssl | default(omit) }}"
     username: "{{ username | default(omit) }}"
+  notify: save running config
   when:
     # srcaddr/srcprefixlen must be a network address unless
     # srcprefixlen is 32 (single host IP) or undefined (default 32)
