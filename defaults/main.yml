@@ -1,5 +1,6 @@
 ---
 # defaults file
+eos_save_running_config: true
 
 eos_acl_default_state: present
 eos_acl_default_type: standard

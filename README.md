@@ -1,3 +1,4 @@
+
 ACL Role for EOS
 ================
 
@@ -8,6 +9,7 @@ object and perform the necessary configuration.
 
 This role is used to configure a limited set of ACL types and configurations.
 See notes under [Role Variables](#Role Variables) for clarification.
+
 
 Installation
 ------------
@@ -23,6 +25,7 @@ Requirements
 Requires an SSH connection for connectivity to your Arista device. You can use
 any of the built-in eos connection variables, or the convenience ``provider``
 dictionary.
+
 
 Role Variables
 --------------
@@ -43,8 +46,6 @@ The tasks in this role are driven by the ``acls`` object described below:
 |          log | boolean: true, false*                | Enables or disables log messages for this ACL rule. |
 |        state | choices: present*, absent            | Set the state for the ACL rule configuration. |
 
-
-
 ```
 Note: Asterisk (*) denotes the default value if none specified
 ```
@@ -61,6 +62,19 @@ by the eos-acl role without regard for the specified sequence number. When
 state is 'present', all other matching rules will be removed. When state is
 'absent', all matching rules will be removed. See example playbook below.
 ```
+
+
+Configuration Variables
+-----------------------
+
+|                     Key | Choices      | Description                              |
+| ----------------------: | ------------ | ---------------------------------------- |
+| eos_save_running_config | true*, false | Specifies whether to write any changes to the running-config resulting from the role execution to memory, copying the configuration to the startup-config. |
+
+```
+Note: Asterisk (*) denotes the default value if none specified
+```
+
 
 Connection Variables
 --------------------
@@ -86,6 +100,7 @@ the Ansible group_vars or host_vars directories, or in the playbook itself.
 Note: Asterisk (*) denotes the default value if none specified
 ```
 
+
 Ansible Variables
 -----------------
 
@@ -105,6 +120,7 @@ The eos-acl role is built on modules included in the core Ansible
 code. These modules were added in ansible version 2.1.
 
 - Ansible 2.1.0
+
 
 Example Playbook
 ----------------
@@ -132,7 +148,7 @@ Sample host_vars/leaf1.example.com
       use_ssl: no
       authorize: yes
       transport: cli
-
+    
     acls:
       - name: ACL-1
         type: standard
