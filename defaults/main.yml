@@ -6,3 +6,5 @@ eos_acl_default_state: present
 eos_acl_default_type: standard
 eos_acl_default_srcprefixlen: 32
 eos_acl_default_log: false
+
+resource_version: '2.2'

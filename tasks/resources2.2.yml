@@ -1,0 +1,30 @@
+# Perform the EOS ACL tasks under Ansible 2.2 or later
+# using the Ansible eos_config module
+
+- name: Arista EOS ACL resources (Ansible >= 2.2)
+  eos_config:
+    src: acl.j2
+    defaults: true
+    config: "{{ _eos_config | default(omit) }}"
+    auth_pass: "{{ auth_pass | default(omit) }}"
+    authorize: "{{ authorize | default(omit) }}"
+    host: "{{ host | default(omit) }}"
+    password: "{{ password | default(omit) }}"
+    port: "{{ port | default(omit) }}"
+    provider: "{{ provider | default(omit) }}"
+    transport: 'cli'
+    use_ssl: "{{ use_ssl | default(omit) }}"
+    username: "{{ username | default(omit) }}"
+  notify: save running config
+  when:
+    # srcaddr/srcprefixlen must be a network address unless
+    # srcprefixlen is 32 (single host IP) or undefined (default 32)
+    item.name is defined and
+    (item.seqno is defined or (item.state is defined and item.state == 'absent')) and
+     item.action is defined and
+     item.srcaddr is defined and
+    (item.srcprefixlen is not defined or
+     item.srcprefixlen == '32' or item.srcprefixlen == 32 or
+     item.srcaddr | ipsubnet(item.srcprefixlen) == "%s/%s" % (item.srcaddr, item.srcprefixlen))
+  with_items: "{{ acls | default([]) }}"
+  register: _eos_acl_role_result

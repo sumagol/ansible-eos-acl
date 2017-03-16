@@ -38,13 +38,6 @@ testcases:
          12 deny host 10.11.12.12
       ip access-list standard ACL-12
          13 permit host 10.11.12.13
-    absent: |
-      ip access-list standard ACL-11
-         11 permit host 10.11.12.11
-         11 permit 10.11.12.11/32
-         12 deny 10.11.12.12/32
-      ip access-list standard ACL-12
-         13 permit 10.11.12.13/32
 
   - name: Add non-existing ACLs as prefix addresses
     arguments:
@@ -281,8 +274,6 @@ testcases:
     absent: |
       ip access-list standard ACL-61
          41 permit host 10.11.12.62
-         61 permit host 10.11.12.61
-         63 deny 10.63.0.0/16 log
          81 permit host 10.11.12.62
 
   - name: Add, modify, remove ACL rules
@@ -342,5 +333,4 @@ testcases:
          82 permit host 10.11.12.82 log
     absent: |
       ip access-list standard ACL-71
-         71 permit host 10.11.12.171 log
          72 deny host 10.11.12.72
