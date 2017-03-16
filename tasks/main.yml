@@ -1,4 +1,14 @@
 ---
+# Determine what resources we will use for running the role:
+# If using Ansible 2.1 or lower, we can use eos_template
+# If using Ansible 2.2 or higher, we must use eos_config
+# resource_version is set to 2.2 by default (since most users will be
+# on updated versions), change it if we're running 2.1 or lower.'
+- set_fact:
+    resource_version: '2.1'
+  when: ansible_version.major < 2 or
+        (ansible_version.major == 2 and ansible_version.minor < 2)
+
 - name: Gather EOS configuration
   eos_command:
     commands: 'show running-config all'
@@ -21,30 +31,6 @@
   no_log: "{{ no_log|default(true) }}"
   when: _eos_config is not defined or not _eos_config
 
-- name: Arista EOS ACL resources
-  eos_template:
-    src: acl.j2
-    include_defaults: true
-    config: "{{ _eos_config | default(omit) }}"
-    auth_pass: "{{ auth_pass | default(omit) }}"
-    authorize: "{{ authorize | default(omit) }}"
-    host: "{{ host | default(omit) }}"
-    password: "{{ password | default(omit) }}"
-    port: "{{ port | default(omit) }}"
-    provider: "{{ provider | default(omit) }}"
-    transport: 'cli'
-    use_ssl: "{{ use_ssl | default(omit) }}"
-    username: "{{ username | default(omit) }}"
-  notify: save running config
-  when:
-    # srcaddr/srcprefixlen must be a network address unless
-    # srcprefixlen is 32 (single host IP) or undefined (default 32)
-    item.name is defined and
-    (item.seqno is defined or (item.state is defined and item.state == 'absent')) and
-     item.action is defined and
-     item.srcaddr is defined and
-    (item.srcprefixlen is not defined or
-     item.srcprefixlen == '32' or item.srcprefixlen == 32 or
-     item.srcaddr | ipsubnet(item.srcprefixlen) == "%s/%s" % (item.srcaddr, item.srcprefixlen))
-  with_items: "{{ acls | default([]) }}"
-  register: _eos_acl_role_result
+# Import the resource tasks based on the version of ansible in use
+- name: Include the Arista EOS ACL resources
+  include: "tasks/resources{{ resource_version }}.yml"
