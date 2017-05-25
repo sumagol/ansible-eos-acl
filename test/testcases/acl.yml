@@ -31,7 +31,6 @@ testcases:
     setup: |
       no ip access-list standard ACL-11
       no ip access-list standard ACL-12
-      exit
     present: |
       ip access-list standard ACL-11
          11 permit host 10.11.12.11 log
@@ -77,7 +76,6 @@ testcases:
     setup: |
       no ip access-list standard ACL-21
       no ip access-list standard ACL-22
-      exit
     present: |
       ip access-list standard ACL-21
          21 permit 10.21.0.0/16 log
@@ -118,7 +116,6 @@ testcases:
       ip access-list standard ACL-31
       10 permit 10.11.12.10/32 log
       50 deny host 10.11.12.50
-      exit
     present: |
       ip access-list standard ACL-31
          10 permit host 10.11.12.10 log
@@ -152,7 +149,6 @@ testcases:
       ip access-list standard ACL-41
       10 permit 10.11.12.10/32 log
       50 deny host 10.11.12.50
-      exit
     present: |
       ip access-list standard ACL-41
          10 permit host 10.11.12.10 log
@@ -219,7 +215,6 @@ testcases:
       55 permit 10.55.0.0/16 log
       154 permit 10.11.154.0/24
       155 permit 10.55.0.0/16 log
-      exit
     present: |
       ip access-list standard ACL-51
          53 permit 53.0.0.0/8
@@ -265,7 +260,6 @@ testcases:
       62 permit host 10.11.12.162
       63 deny 10.63.0.0/16 log
       81 permit host 10.11.12.62
-      exit
     present: |
       ip access-list standard ACL-61
          61 permit host 10.11.12.61 log
@@ -323,7 +317,6 @@ testcases:
       ip access-list standard ACL-71
       71 permit host 10.11.12.171 log
       72 deny host 10.11.12.72
-      exit
     present: |
       ip access-list standard ACL-71
          71 permit host 10.11.12.71
