@@ -10,6 +10,7 @@
 {% set srcaddr = item.srcaddr %}
 {% set srcprefixlen = item.srcprefixlen | default(eos_acl_default_srcprefixlen) %}
 {% set log = item.log | default(eos_acl_default_log) %}
+{% set do_exit = false %}
 
 {# set the network address specified by the srcaddr/srcprefixlen
 {# this matches the information represented by 'show' on EOS #}
@@ -39,16 +40,20 @@ ip access-list {{ type }} {{ name }}
 
       {% set match = acl_block | join('\n') | re_findall("^(\d+)\s*%s %s%s$" % (action, netaddr, log_rule)) %}
       {% if match %}
+         {% set do_exit = true %} {# this change requires a final 'exit' command #}
          {% for entry in match %}
 
    no {{ entry }}
 
          {% endfor %} {# entry in match #}
       {% endif %} {# match #}
-      {# exit from the ip access-list block to save changes #}
+
+      {# if we made any changes, send an exit command #}
+      {% if do_exit %}
 
    exit
 
+      {% endif %} {# do_exit #}
    {% endif %} {# acl_block #}
 
 {% elif state == 'present' %}
@@ -64,6 +69,7 @@ ip access-list {{ type }} {{ name }}
             {# the requested seqno, then the entry exists and we do not
             {# want to remove it #}
             {% if entry != "%s" % seqno %}
+               {% set do_exit = true %} {# this change requires a final 'exit' command #}
 
    no {{ entry }}
 
@@ -74,15 +80,30 @@ ip access-list {{ type }} {{ name }}
       {# now remove any entry with the same seqno that does not match the full requested entry #}
       {% set match = acl_block | join('\n') | re_search("^%s .*" % seqno) %}
       {% if match and match.group(0) != rule %}
+         {% set do_exit = true %} {# this change requires a final 'exit' command #}
 
    no {{ seqno }}
+   {{ rule }}
+
+      {% elif not match %}
+         {% set do_exit = true %} {# this change requires a final 'exit' command #}
+
+   {{ rule }}
 
       {% endif %} {# match #}
 
-   {% endif %} {# acl_block #}
-   {# finally, add the rule and exit #}
+   {% else %} {# (not) acl_block #}
+      {# add the rule if the acl block did not previously exist #}
+      {% set do_exit = true %} {# this change requires a final 'exit' command #}
 
    {{ rule }}
+
+   {% endif %} {# acl_block #}
+
+   {# if we made any changes, send an exit command #}
+   {% if do_exit %}
+
    exit
 
+   {% endif %} {# do_exit #}
 {% endif %}
