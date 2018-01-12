@@ -44,8 +44,6 @@ def network_address(net_addr):
         str: The network address specified by the input net_addr.
     """
     ip = IPNetwork(net_addr)
-    import XXX
-    XXX.file("XXX")
     return(str(ip.network))
 
 class FilterModule(object):
