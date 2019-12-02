@@ -12,12 +12,18 @@
 {% set log = item.log | default(eos_acl_default_log) %}
 {% set do_exit = false %}
 
-{# set the network address specified by the srcaddr/srcprefixlen
-{# this matches the information represented by 'show' on EOS #}
-{% set netaddr = srcaddr | ipsubnet(srcprefixlen) %}
-{% if not netaddr %}
-   {# if srcprefixlen is 32, netaddr is False, so define the netaddr as a host IP #}
-   {% set netaddr = "host %s" % srcaddr %}
+
+{% if srcaddr != 'any' and action != "remark" %} {# src == any will fail ipsubnet check #}
+
+    {# set the network address specified by the srcaddr/srcprefixlen
+    {# this matches the information represented by 'show' on EOS #}
+    {% set netaddr = srcaddr | ipsubnet(srcprefixlen) %}
+    {% if not netaddr %}
+       {# if srcprefixlen is 32, netaddr is False, so define the netaddr as a host IP #}
+       {% set netaddr = "host %s" % srcaddr %}
+    {% endif %}
+    {% else %} {# src address is any  #}
+        {% set netaddr = srcaddr %}
 {% endif %}
 
 {# set the seqno and log strings to be used in the actual rule #}
